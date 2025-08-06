@@ -1,17 +1,16 @@
 import os
 import subprocess
+import shutil
+
+from . import Utils
+
+from thonny import get_workbench, get_shell
 from thonny import get_workbench
 from tkinter import messagebox
-from . import Utils
-import os
+
 from thonny import get_runner
-
 from tkinter import filedialog
-from thonny import get_workbench, get_shell
 
-import os
-from tkinter import filedialog
-from thonny import get_workbench
 
 def ask_folder(title="Select folder"):
     """
@@ -61,11 +60,21 @@ def detect_circuitpython_device():
 
     return None
 
+
+
 def detect_micropython_device():
     """
     Checks if a MicroPython device is accessible via `mpremote connect auto`.
-    Returns True if found, False otherwise.
+    Returns True if device is found.
+    Returns False if no device is found or mpremote is not available.
+    Prints helpful messages in either case.
     """
+    if shutil.which("mpremote") is None:
+        print("⚠️  'mpremote' not found. Please install it using:")
+        print("    pip install mpremote")
+        log_to_console("'mpremote' not found. Please install it using pip install mpremote'")
+        return False
+
     try:
         subprocess.run(
             ["mpremote", "connect", "auto"],
@@ -74,8 +83,10 @@ def detect_micropython_device():
             check=True
         )
         return True
-    except Exception:
+    except subprocess.CalledProcessError:
+        print("❌ No MicroPython device detected.")
         return False
+
 
 def detect_python_device():
     """
