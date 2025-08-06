@@ -61,31 +61,54 @@ def detect_circuitpython_device():
     return None
 
 
+def check_mounting_points():
+    print("🔍 Checking mount points for MicroPython mass storage...")
+    mount_roots = ["/media", "/mnt", "/run/media"]
+    for root in mount_roots:
+        if os.path.isdir(root):
+            print(f"  📂 Root: {root}")
+            for sub in os.listdir(root):
+                path = os.path.join(root, sub)
+                print(f"    📁 Found: {path}")
+                if os.path.isdir(path):
+                    entries = os.listdir(path)
+                    print(f"      📄 Contents: {entries}")
+                    if "main.py" in entries or "boot.py" in entries:
+                        print(f"✅ Found MicroPython device at: {path}")
+                        return {"type": "micropython", "path": path, "ready": True}
 
 def detect_micropython_device():
     """
-    Checks if a MicroPython device is accessible via `mpremote connect auto`.
-    Returns True if device is found.
-    Returns False if no device is found or mpremote is not available.
-    Prints helpful messages in either case.
-    """
-    if shutil.which("mpremote") is None:
-        print("⚠️  'mpremote' not found. Please install it using:")
-        print("    pip install mpremote")
-        log_to_console("'mpremote' not found. Please install it using pip install mpremote'")
-        return False
+    Detects a MicroPython device based on Thonny backend and mounted drives.
 
+    Returns:
+        {
+            'type': 'micropython',
+            'path': USB mount path if available, otherwise None,
+            'ready': True or False
+        }
+    """
     try:
-        subprocess.run(
-            ["mpremote", "connect", "auto"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=True
-        )
-        return True
-    except subprocess.CalledProcessError:
-        print("❌ No MicroPython device detected.")
-        return False
+        runner = get_runner()
+        backend_name = runner.get_backend_name().lower()
+        if "micropython" in backend_name:
+            # Try to find a mounted USB drive that looks like a MicroPython board
+            mount_roots = ["/media", "/mnt", "/run/media"]
+            for root in mount_roots:
+                if os.path.isdir(root):
+                    for sub in os.listdir(root):
+                        path = os.path.join(root, sub)
+                        if os.path.isdir(path):
+                            entries = os.listdir(path)
+                            if "main.py" in entries or "boot.py" in entries:
+                                return {"type": "micropython", "path": path, "ready": True}
+            # No mount found, but backend is active
+            return {"type": "micropython", "path": None, "ready": True}
+    except Exception as e:
+        print(f"⚠️ Could not check Thonny backend: {e}")
+
+    return {"type": None, "path": None, "ready": False}
+
 
 
 def detect_python_device():
