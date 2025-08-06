@@ -1,4 +1,7 @@
 
+
+**STATUS: HAS NOT BEEN TESTED WITH A MICROCONTROLLER BOARD**
+
 # Thonny Plugin: Sync from Device
 
 This Thonny plugin adds a menu item and keyboard shortcut to quickly sync files from a connected MicroPython/CircuitPython device, or from a local folder if no device is detected. It replaces the contents of a selected target folder with the contents of the origin (device or folder).
